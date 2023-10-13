@@ -25,9 +25,12 @@ pub fn run() -> Result<(), JsValue> {
       canvas.set_height(CANVAS_HEIGHT);
       canvas.set_width(CANVAS_WIDTH);
 
+      let reset_button = util::get_reset_button()
+          .map_err(|e| JsValue::from_str(&format!("{e:?}"))).unwrap();
+
       let cxt = util::get_context(&canvas).unwrap();
 
-      // create a channel to collect click events
+      // create a channel to collect user interactions
       let (s, mut r) = channel::<(EventType,i32,i32)>(10);
 
       // when the user clicks the canvas, send the location into the channel
@@ -45,6 +48,14 @@ pub fn run() -> Result<(), JsValue> {
             s2.try_send((EventType::Move, evt.offset_x(), evt.offset_y())).unwrap();
           });
       canvas.set_onmousemove(Some(mouse_move_handler.as_ref().unchecked_ref()));
+
+      // when the user clicks the reset button
+      let mut s3 = s.clone();
+      let reset_button_handler: Closure<dyn FnMut(web_sys::PointerEvent)>
+        = Closure::new(move |_evt: web_sys::PointerEvent| {
+            s3.try_send((EventType::Reset, 0, 0)).unwrap();
+          });
+      reset_button.set_onclick(Some(reset_button_handler.as_ref().unchecked_ref()));
 
       // set the starting view area
       let mut coords = Rect {
@@ -129,6 +140,16 @@ pub fn run() -> Result<(), JsValue> {
             cxt.line_to(x0 as f64,y0 as f64);
             cxt.stroke();
           },
+
+          (EventType::Reset, _) => {
+            coords.right = 0.5;
+            coords.left = -2.0;
+            coords.top = 1.25;
+            coords.bottom = -1.25;
+            image_data = draw::render(&coords);
+            cxt.put_image_data(&image_data, 0.0, 0.0).unwrap();
+            state = State::NotSelecting;
+          }
         }
       }
     });

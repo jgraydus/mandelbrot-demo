@@ -15,7 +15,8 @@ pub enum Error {
   WindowNotAvailable,
   DocumentNotAvailable,
   CanvasNotAvailable,
-  Context2dNotAvailable
+  Context2dNotAvailable,
+  ResetButtonNotAvailable,
 }
 
 pub fn get_canvas() -> Result<web_sys::HtmlCanvasElement,Error> {
@@ -37,6 +38,16 @@ pub fn get_context(
     .ok_or(Error::Context2dNotAvailable)?
     .dyn_into::<web_sys::CanvasRenderingContext2d>()
     .map_err(|_e| Error::Context2dNotAvailable)
+}
+
+pub fn get_reset_button() -> Result<web_sys::HtmlButtonElement,Error> {
+  let window = web_sys::window().ok_or(Error::WindowNotAvailable)?;
+  let document = window.document().ok_or(Error::DocumentNotAvailable)?;
+  document
+    .get_element_by_id("reset_button")
+    .unwrap()
+    .dyn_into::<web_sys::HtmlButtonElement>()
+    .map_err(|_e| Error::ResetButtonNotAvailable)
 }
 
 pub fn spawn_local<F>(future: F) 

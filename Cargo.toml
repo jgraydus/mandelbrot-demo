@@ -33,6 +33,7 @@ features = [
   "console",
   "Document",
   "Element",
+  "HtmlButtonElement",
   "HtmlCanvasElement",
   "ImageData",
   "PointerEvent",
