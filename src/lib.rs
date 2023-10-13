@@ -68,17 +68,22 @@ pub fn run() -> Result<(), JsValue> {
       let w = CANVAS_WIDTH as f64;
 
       while let Some((event_type, x, y)) = r.next().await {
-        // log!("{event_type:?}: {x:?}, {y:?} {state:?}");
         match (event_type, state) {
+
+          // remember where the click happened and transition to Selecting state
           (EventType::Click, State::NotSelecting) => {
-            // remember the first click of the selection
             x0 = x;
             y0 = y;
             state = State::Selecting;
           },
+
+          // do nothing during movement when not in selecting state
+          (EventType::Move, State::NotSelecting) => { },
+
+          // remap complex plane to the canvas based on selected area and then rerender
           (EventType::Click, State::Selecting) => {
             // force a square selection
-            let x = x0 + (y - y0);
+            let x = x0 + (if x > x0 { 1 } else { -1 } * if y > y0 { 1 } else { -1 }) * (y - y0);
 
             // calculate the new complex coordinates for the canvas area
             let temp_x = (x0 as f64 / w) * (coords.right - coords.left) + coords.left;
@@ -104,14 +109,15 @@ pub fn run() -> Result<(), JsValue> {
 
             state = State::NotSelecting;
           },
-          (EventType::Move, State::NotSelecting) => {
-            // do nothing
-          },
+
+          // draw the rendered image and a square for the selection area
           (EventType::Move, State::Selecting) => {
             // force a square selection
-            let x = x0 + (y - y0);
+            let x = x0 + (if x > x0 { 1 } else { -1 } * if y > y0 { 1 } else { -1 }) * (y - y0);
+
             // draw the currently rendered image
             cxt.put_image_data(&image_data, 0.0, 0.0).unwrap();
+
             // draw the selection box on top
             cxt.set_line_width(2.0);
             cxt.set_stroke_style(&JsValue::from_str("red"));
@@ -125,7 +131,6 @@ pub fn run() -> Result<(), JsValue> {
           },
         }
       }
- 
     });
 
     Ok(())

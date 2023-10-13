@@ -64,7 +64,7 @@ fn render0(
       // calculate the color for this pixel
       let (r, g, b) = if c < MAX_ITERATIONS {
         let c = c % 32;
-        ((c * 5) as u8, (c * 7) as u8, (c * 13) as u8)
+        ((c * 5) as u8, (c * 7) as u8, (c * 17) as u8)
       } else {
         (0, 0, 0)
       };
